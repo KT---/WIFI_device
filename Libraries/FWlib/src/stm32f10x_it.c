@@ -141,15 +141,7 @@ void SysTick_Handler(void)
 // 串口中断服务函数
 
 
-void USART1_IRQHandler(void) 
-{
-  uint8_t ucTemp;
-	if(USART_GetITStatus(USART1,USART_IT_RXNE)!=RESET)
-	{		
-		ucTemp = USART_ReceiveData(USART1);
-    USART_SendData(USART3,ucTemp);    
-	}	 
-}
+
 /**
   * @brief  This function handles PPP interrupt request.
   * @param  None

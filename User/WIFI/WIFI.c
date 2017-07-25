@@ -1,5 +1,21 @@
+/**
+  ******************************************************************************
+  * @file    WIFI.c
+  * @author  KT
+  * @version V1.0
+  * @date    2017-7-25
+  * @brief   
+  ******************************************************************************
+  * @attention
+  *
+  *
+  ******************************************************************************
+  */ 
 #include "WIFI.h"
 
+u8 wifi_usart_buf[255];
+u32 wifi_status = 0; 
+	
 void WIFI_Init(void)
 {
 	
@@ -43,6 +59,7 @@ void WIFI_Init(void)
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 	// 完成串口的初始化配置
 	USART_Init(WIFI_USARTx, &USART_InitStructure);
+	/**************************************************/
 	
 	/**************配置中断***************************/
 	// 串口中断优先级配置
@@ -59,7 +76,7 @@ void WIFI_Init(void)
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   /* 初始化配置NVIC */
   NVIC_Init(&NVIC_InitStructure);
-	
+	/**************************************************/
 	// 使能串口接收中断
 	USART_ITConfig(WIFI_USARTx, USART_IT_RXNE, ENABLE);	
 	
@@ -85,7 +102,7 @@ void WIFI_Init(void)
 
 	/*调用库函数，初始化GPIO*/
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
-	
+	/**************************************************/
 }
 
 void WIFI_Config(void)
@@ -105,6 +122,13 @@ void WIFI_USART_IRQHandler(void)
 	if(USART_GetITStatus(WIFI_USARTx,USART_IT_RXNE)!=RESET)
 	{		
 		ucTemp = USART_ReceiveData(WIFI_USARTx);
-    USART_SendData(USART1,ucTemp);    
-	}	 
+		wifi_usart_buf[wifi_status] = ucTemp;
+		if((wifi_usart_buf[wifi_status] == 0x0a) && (wifi_usart_buf[wifi_status-1] == 0x0d))
+		{
+			wifi_status |= 0x80000000;
+			wifi_status &= 0xFFFF0000;
+		}
+		wifi_status++;
+//    USART_SendData(USART1,(u8)wifi_status); 
+	}
 }

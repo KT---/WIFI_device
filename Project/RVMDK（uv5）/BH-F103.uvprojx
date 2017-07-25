@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD, USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\Libraries\CMSIS;..\..\User;..\..\Libraries\FWlib\inc;..\..\User\usart;..\..\User\WIFI</IncludePath>
+              <IncludePath>..\..\Libraries\CMSIS;..\..\User;..\..\Libraries\FWlib\inc;..\..\User\usart;..\..\User\WIFI;..\..\User\debug;..\..\User\SysTick</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -535,6 +535,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\Libraries\FWlib\src\stm32f10x_wwdg.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f10x_it.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Libraries\FWlib\src\stm32f10x_it.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -551,16 +556,6 @@
               <FilePath>..\..\User\stm32f10x_conf.h</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_it.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\User\stm32f10x_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_it.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\User\stm32f10x_it.h</FilePath>
-            </File>
-            <File>
               <FileName>bsp_usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\User\usart\bsp_usart.c</FilePath>
@@ -569,6 +564,16 @@
               <FileName>WIFI.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\User\WIFI\WIFI.c</FilePath>
+            </File>
+            <File>
+              <FileName>debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\User\debug\debug.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_SysTick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\User\SysTick\bsp_SysTick.c</FilePath>
             </File>
           </Files>
         </Group>
