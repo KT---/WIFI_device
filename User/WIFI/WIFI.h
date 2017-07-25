@@ -32,7 +32,8 @@
 #define  WIFI_Reset                    GPIO_ResetBits(GPIOB,GPIO_Pin_9);
 /**************************************************************/
 
-#define  WIFI_ready                    wifi_status & 0x80000000
+#define  WIFI_ready                    (u8)((wifi_status & 0x80000000) >> 31)
+
 
 void WIFI_Init(void);
 void WIFI_Config(void);

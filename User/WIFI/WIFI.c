@@ -122,13 +122,14 @@ void WIFI_USART_IRQHandler(void)
 	if(USART_GetITStatus(WIFI_USARTx,USART_IT_RXNE)!=RESET)
 	{		
 		ucTemp = USART_ReceiveData(WIFI_USARTx);
-		wifi_usart_buf[wifi_status] = ucTemp;
-		if((wifi_usart_buf[wifi_status] == 0x0a) && (wifi_usart_buf[wifi_status-1] == 0x0d))
+		wifi_usart_buf[(u8)wifi_status] = ucTemp;
+		if((wifi_usart_buf[(u8)wifi_status] == 0x0a) && (wifi_usart_buf[(u8)wifi_status-1] == 0x0d))
 		{
+//			USART_ITConfig(WIFI_USARTx, USART_IT_RXNE, DISABLE);	
 			wifi_status |= 0x80000000;
-			wifi_status &= 0xFFFF0000;
+//			wifi_status &= 0xFFFF0000;
 		}
 		wifi_status++;
-//    USART_SendData(USART1,(u8)wifi_status); 
+//    USART_SendData(USART1,ucTemp); 
 	}
 }
