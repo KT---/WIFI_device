@@ -12,10 +12,12 @@
   ******************************************************************************
   */ 
 #include "WIFI.h"
+#include "bsp_SysTick.h"
 //#include "timer.h"
 
-u8 *wifi_usart_buf;
+u8 wifi_usart_buf[1024] = {0};
 u32 wifi_status = 0; 
+u16 TIM_Multi = 0;
 
 
 
@@ -87,9 +89,18 @@ void WIFI_USART_Init(void)
 	
 	// 使能串口
 	USART_Cmd(WIFI_USARTx, ENABLE);	
+
+}
+
+
+/**
+  *@name WIFI模块使能及重置引脚初始化
+  */
+void WIFI_GPIO_Init()
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
 	
-	
-	//	/**************配置IO**************************/
+	/**************配置IO**************************/
 	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOB, ENABLE);
 	/*选择要控制的GPIO引脚*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;	
@@ -107,40 +118,9 @@ void WIFI_USART_Init(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
 
 	/*调用库函数，初始化GPIO*/
-//	GPIO_Init(GPIOB, &GPIO_InitStructure);
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
 	/**************************************************/
-
 }
-
-
-/**
-  *@name WIFI模块使能及重置引脚初始化
-  */
-//void WIFI_GPIO_Init()
-//{
-//	GPIO_InitTypeDef GPIO_InitStructure;
-//	
-//	/**************配置IO**************************/
-//	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOB, ENABLE);
-//	/*选择要控制的GPIO引脚*/
-//	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;	
-
-//	/*设置引脚模式为通用推挽输出*/
-//	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;   
-
-//	/*设置引脚速率为50MHz */   
-//	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
-
-//	/*调用库函数，初始化GPIO*/
-//	GPIO_Init(GPIOB, &GPIO_InitStructure);	
-//	
-//	/*选择要控制的GPIO引脚*/
-//	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
-
-//	/*调用库函数，初始化GPIO*/
-//	GPIO_Init(GPIOB, &GPIO_InitStructure);
-//	/**************************************************/
-//}
 
 
 /**
@@ -187,7 +167,7 @@ void WIFI_USART_TIM_Init(void)
 	NVIC_Init(&NVIC_InitStructure);
 	
 	// 使能计数器
-	TIM_Cmd(WIFI_USART_TIM, ENABLE);
+	TIM_Cmd(WIFI_USART_TIM, DISABLE);
 }
 
 
@@ -198,7 +178,7 @@ void WIFI_Config(void)
 {
 	
 	WIFI_USART_Init();
-//	WIFI_GPIO_Init();
+	WIFI_GPIO_Init();
 	WIFI_USART_TIM_Init();
 	
 	WIFI_enable;
@@ -215,13 +195,18 @@ void WIFI_USART_IRQHandler(void)
   uint8_t ucTemp;
 	if(USART_GetITStatus(WIFI_USARTx,USART_IT_RXNE)!=RESET)
 	{		
-		TIM_ClearITPendingBit(WIFI_USART_TIM , TIM_FLAG_Update);
-		
 		ucTemp = USART_ReceiveData(WIFI_USARTx);
+
+#if 1
 		wifi_usart_buf[(u16)wifi_status] = ucTemp;
- 
 		wifi_status++;
+	
+		TIM_Cmd(WIFI_USART_TIM, ENABLE);
+		TIM_Multi = 0;
+		TIM_ClearITPendingBit(WIFI_USART_TIM , TIM_FLAG_Update);
+#else
     USART_SendData(USART1,ucTemp); 
+#endif
 	}
 }
 
@@ -233,8 +218,14 @@ void  WIFI_USART_TIM_IRQHandler (void)
 {
 	if ( TIM_GetITStatus( WIFI_USART_TIM, TIM_IT_Update) != RESET ) 
 	{	
-    wifi_status |= 0x80000000;
-
-		TIM_ClearITPendingBit(WIFI_USART_TIM , TIM_FLAG_Update);  		 
+		if(TIM_Multi >= 500)
+		{
+			wifi_status |= 0x80000000;
+	//		wifi_status --;
+//			USART_ITConfig(WIFI_USARTx, USART_IT_RXNE, DISABLE);
+			TIM_Cmd(WIFI_USART_TIM, DISABLE);
+		}
+		TIM_ClearITPendingBit(WIFI_USART_TIM , TIM_FLAG_Update); 
+ 		TIM_Multi++;
 	}		 	
 }

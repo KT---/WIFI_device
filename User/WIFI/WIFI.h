@@ -36,7 +36,7 @@
 #define            WIFI_USART_TIM                   TIM2
 #define            WIFI_USART_TIM_APBxClock_FUN     RCC_APB1PeriphClockCmd
 #define            WIFI_USART_TIM_CLK               RCC_APB1Periph_TIM2
-#define            WIFI_USART_TIM_Period            (1000*50-1)
+#define            WIFI_USART_TIM_Period            (1000-1)
 #define            WIFI_USART_TIM_Prescaler         71
 #define            WIFI_USART_TIM_IRQ               TIM2_IRQn
 #define            WIFI_USART_TIM_IRQHandler        TIM2_IRQHandler
@@ -47,7 +47,7 @@
 
 void WIFI_Config(void);
 
-extern u8 *wifi_usart_buf;
+extern u8 wifi_usart_buf[1024];
 extern u32 wifi_status; 
 #endif
 
