@@ -9,7 +9,7 @@
 
 
 void Usart_SendByte( USART_TypeDef * pUSARTx, uint8_t ch);
-void Usart_SendString( USART_TypeDef * pUSARTx, unsigned char *str);
+void Usart_SendString( USART_TypeDef * pUSARTx, u8 *str,u16 len);
 void Usart_SendHalfWord( USART_TypeDef * pUSARTx, uint16_t ch);
 
 #endif /* __USART_H */

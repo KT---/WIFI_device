@@ -8,7 +8,7 @@
 
 
 #define Delay_ms(x) Delay_us(1000*x)	 //µ¥Î»ms
-
+#define TimingDelay_Decrement  SysTick_Handler
 
 
 void SysTick_Init( void );

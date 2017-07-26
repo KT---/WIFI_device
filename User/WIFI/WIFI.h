@@ -7,7 +7,7 @@
 #include <string.h>
 
 
-/********************串口宏定义*******************************/
+/**********************串口宏定义*******************************/
 #define  WIFI_USARTx                   USART3
 #define  WIFI_USART_CLK                RCC_APB1Periph_USART3
 #define  WIFI_USART_APBxClkCmd         RCC_APB1PeriphClockCmd
@@ -30,15 +30,24 @@
 
 #define  WIFI_Set											 GPIO_SetBits(GPIOB,GPIO_Pin_9);
 #define  WIFI_Reset                    GPIO_ResetBits(GPIOB,GPIO_Pin_9);
-/**************************************************************/
+/************************************************************************/
 
+/*******************串口监测定时器宏定义*******************************/
+#define            WIFI_USART_TIM                   TIM2
+#define            WIFI_USART_TIM_APBxClock_FUN     RCC_APB1PeriphClockCmd
+#define            WIFI_USART_TIM_CLK               RCC_APB1Periph_TIM2
+#define            WIFI_USART_TIM_Period            (1000*50-1)
+#define            WIFI_USART_TIM_Prescaler         71
+#define            WIFI_USART_TIM_IRQ               TIM2_IRQn
+#define            WIFI_USART_TIM_IRQHandler        TIM2_IRQHandler
+/************************************************************************/
 #define  WIFI_ready                    (u8)((wifi_status & 0x80000000) >> 31)
 
 
-void WIFI_Init(void);
+
 void WIFI_Config(void);
 
-extern u8 wifi_usart_buf[255];
+extern u8 *wifi_usart_buf;
 extern u32 wifi_status; 
 #endif
 

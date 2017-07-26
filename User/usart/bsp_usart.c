@@ -30,15 +30,19 @@ void Usart_SendByte( USART_TypeDef * pUSARTx, uint8_t ch)
 }
 
 /*****************  发送字符串 **********************/
-void Usart_SendString( USART_TypeDef * pUSARTx, unsigned char *str)
+void Usart_SendString( USART_TypeDef * pUSARTx, u8 *str,u16 len)
 {
 	unsigned int k=0;
-  do 
-  {
-      Usart_SendByte( pUSARTx, *(str + k) );
-      k++;
-  } while(*(str + k)!='\0');
+//  do 
+//  {
+//      Usart_SendByte( pUSARTx, *(str + k) );
+//      k++;
+//  } while(*(str + k)!='\0');
   
+	for(k=0;k<len;k++)
+	{
+		Usart_SendByte( pUSARTx, *(str + k) );
+	}
   /* 等待发送完成 */
   while(USART_GetFlagStatus(pUSARTx,USART_FLAG_TC)==RESET)
   {}

@@ -19,6 +19,7 @@
 #include "bsp_SysTick.h"
 #include "debug.h"
 #include <string.h>
+#include "Timer.h"
 
 //void GPIO_Config(void);
 //void delay_ms(u16 time);
@@ -34,9 +35,11 @@ int main(void)
 {	
 	u16 i;
   SysTick_Init();
+//	Delay_ms(2000);
 	debug_Init();
+//	GENERAL_TIM_Init();
   WIFI_Config();
-//  printf("debug功能已开 \r\n");
+  printf("debug功能已开 \r\n");
 //	printf("length = %d",strlen(AT_CWJAP));
 
   while(1)
@@ -44,9 +47,9 @@ int main(void)
 			if(WIFI_ready)
 			{
 				
-				Usart_SendString(DEBUG_USARTx,wifi_usart_buf);
+				Usart_SendString(DEBUG_USARTx,wifi_usart_buf,(u16)(wifi_status & 0x0000FFFF));
 //				Usart_SendString(DEBUG_USARTx,DA_Signal);	
-				Usart_SendByte(DEBUG_USARTx,(u8)(wifi_status & 0x0000FFFF));
+//				Usart_SendByte(DEBUG_USARTx,(u8)(wifi_status & 0x0000FFFF));
 				for(i=0;i<(wifi_status & 0x0000FFFF);i++)
 				{
 					wifi_usart_buf[i] = 0;
