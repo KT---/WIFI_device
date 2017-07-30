@@ -12,14 +12,15 @@
   ******************************************************************************
   */ 
 #include "WIFI.h"
-#include "bsp_SysTick.h"
+
 //#include "timer.h"
 
 u8 wifi_usart_buf[1024] = {0};
-u32 wifi_status = 0; 
+u32 wifi_status; 
 u16 TIM_Multi = 0;
 
 
+/**********************************************************/
 
 /**
   *@name WIFI模块串口初始化
@@ -91,6 +92,7 @@ void WIFI_USART_Init(void)
 	USART_Cmd(WIFI_USARTx, ENABLE);	
 
 }
+/**********************************************************/
 
 
 /**
@@ -121,6 +123,7 @@ void WIFI_GPIO_Init()
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 	/**************************************************/
 }
+/**********************************************************/
 
 
 /**
@@ -169,6 +172,7 @@ void WIFI_USART_TIM_Init(void)
 	// 使能计数器
 	TIM_Cmd(WIFI_USART_TIM, DISABLE);
 }
+/**********************************************************/
 
 
 /**
@@ -181,9 +185,206 @@ void WIFI_Config(void)
 	WIFI_GPIO_Init();
 	WIFI_USART_TIM_Init();
 	
-	WIFI_enable;
-  WIFI_Set;
-	
+//	WIFI_enable;
+//  WIFI_Set;
+	WIFI_DataHandler( WIFI_Restart);
+	Delay_ms(10);
+	WIFI_DataHandler( WIFI_JoinAP);
+	Delay_ms(10);
+	WIFI_DataHandler( WIFI_TcpConnet);
+	Delay_ms(10);
+	WIFI_DataHandler( WIFI_Mode);
+	Delay_ms(10);
+	WIFI_DataHandler( WIFI_Send);
+	Delay_ms(10);
+	WIFI_DataHandler( WIFI_POST);
+//	Delay_ms(10);
+//	WIFI_DataHandler( WIFI_Restart);
+}
+/**********************************************************/
+
+
+u32 WIFI_DataHandler( WIFI_HandlerType type)
+{
+	u32 w_time = 0;
+//	AT_cmd JoinAP;
+#if 0
+	u8 AT_CWJAP[]="AT+CWJAP=\"CandyTime_7ED191\",\"ktlovejackiemilktea&coffee\"\r\n";
+	u8 AT_CIPSTART[]="AT+CIPSTART=\"TCP\",\"192.168.100.15\",80\r\n";
+#else
+	u8 AT_CWJAP[]="AT+CWJAP=\"KLX\",\"klx39909679203\"\r\n";
+	u8 AT_CIPSTART[]="AT+CIPSTART=\"TCP\",\"192.168.199.145\",80\r\n";
+#endif
+	u8 AT_CIPMODE[]="AT+CIPMODE=1\r\n";
+	u8 AT_CIPSEND[]="AT+CIPSEND\r\n";
+	u8 POST_HEARD[]="POST http://localhost/LoginTest/connection-test.php HTTP/1.0\r\n";
+	u8 POST_TYPE[]="Content-Type: application/x-www-form-urlencoded\r\n";
+	u8 POST_LENGTH[]="Content-Length:47\r\n\r\n";
+	u8 POST_CONTENT[]="Device_Num=001&CARD_Num=1234567890&Quantity=100\r\n";
+	switch(type)
+	{
+		case WIFI_Restart:
+					WIFI_disable;
+					WIFI_Reset;
+					Delay_ms(100);
+					WIFI_enable;
+					WIFI_Set;
+					while(!WIFI_rx_get)
+					{
+						Delay_us(1000);
+						if(++w_time > 5000)
+						{
+							printf("WIFI模块初始化超时\r\n\r\n");
+							clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+							WIFI_rx_get_rst;
+							return 0;
+						}
+					}
+					if(Usart_buf_fine_char((u8 *)("ready")))
+					{
+						printf("WIFI模块ready\r\n\r\n");
+						clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+						WIFI_rx_get_rst;
+						return 1;
+					}
+					else
+					{
+						printf("WIFI模块初始化失败\r\n\r\n");
+						clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+						WIFI_rx_get_rst;
+						return 0;
+					}
+//					break;
+			
+		case WIFI_JoinAP:
+				  Usart_SendString(WIFI_USARTx,AT_CWJAP,strlen((const char *)AT_CWJAP));
+					while(!(WIFI_rx_get && Usart_buf_fine_char((u8 *)("OK"))))
+					{
+						Delay_us(1000);
+						if(++w_time > 20000)
+						{
+							printf("AP连接超时\r\n\r\n");
+							clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+							WIFI_rx_get_rst;
+							return 0;
+						}
+					}
+					printf("AP连接成功\r\n\r\n");
+					clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+					WIFI_rx_get_rst;
+					return 1;
+//					break;
+		case WIFI_TcpConnet:
+					Usart_SendString(WIFI_USARTx,AT_CIPSTART,strlen((const char *)AT_CIPSTART));
+					while(!(WIFI_rx_get && Usart_buf_fine_char((u8 *)("OK"))))
+					{
+						Delay_us(1000);
+						if(++w_time > 5000)
+						{
+							printf("TCP连接超时\r\n\r\n");
+							clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+							WIFI_rx_get_rst;
+							return 0;
+						}
+					}
+					printf("TCP连接成功\r\n\r\n");
+					clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+					WIFI_rx_get_rst;
+					return 1;
+	  case WIFI_Mode:
+					Usart_SendString(WIFI_USARTx,AT_CIPMODE,strlen((const char *)AT_CIPMODE));
+					while(!(WIFI_rx_get && Usart_buf_fine_char((u8 *)("OK"))))
+					{
+						Delay_us(1000);
+						if(++w_time > 2000)
+						{
+							printf("MODE设置失败\r\n\r\n");
+							clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+							WIFI_rx_get_rst;
+							return 0;
+						}
+					}
+					printf("MODE设置成功\r\n\r\n");
+					clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+					WIFI_rx_get_rst;
+					return 1;
+	  case WIFI_Send:
+			    Usart_SendString(WIFI_USARTx,AT_CIPSEND,strlen((const char *)AT_CIPSEND));
+					while(!(WIFI_rx_get && Usart_buf_fine_char((u8 *)("OK"))))
+					{
+						Delay_us(1000);
+						if(++w_time > 3000)
+						{
+							printf("启动透传失败\r\n\r\n");
+							clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+							WIFI_rx_get_rst;
+							return 0;
+						}
+					}
+					printf("启动透传成功\r\n\r\n");
+					clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+					WIFI_rx_get_rst;
+					return 1;
+
+		case WIFI_POST:
+				  Usart_SendString(WIFI_USARTx,POST_HEARD,strlen((const char *)POST_HEARD));
+				  Usart_SendString(WIFI_USARTx,POST_TYPE,strlen((const char *)POST_TYPE));
+				  Usart_SendString(WIFI_USARTx,POST_LENGTH,strlen((const char *)POST_LENGTH));
+				  Usart_SendString(WIFI_USARTx,POST_CONTENT,strlen((const char *)POST_CONTENT));
+					while(!(WIFI_rx_get && Usart_buf_fine_char((u8 *)("hello device"))))
+					{
+						Delay_us(1000);
+						if(++w_time > 10000)
+						{
+							printf("POST请求失败\r\n\r\n");
+							clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+							WIFI_rx_get_rst;
+							return 0;
+						}
+					}
+					printf("POST请求成功\r\n\r\n");
+					clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+					WIFI_rx_get_rst;
+					return 1;
+
+		default:break;
+	}
+	return 0;
+}
+
+
+void clear_buffer(u8 *buffer,u16 length)
+{
+	u16 i;
+	for( i = 0;i < length;i++)
+	{
+		buffer[i] = 0;
+	}
+}
+
+
+/**
+  *@name 串口buffer判断是否存在某字段
+  */
+u16 Usart_buf_fine_char(u8 *target_char)
+{
+	u16 i,j;
+//	u8 ready[5]={0x72,0x65,0x61,0x64,0x79};
+	for(i=0;i<=(wifi_status & 0x0000FFFF);i++)
+	{
+		if(wifi_usart_buf[i] == target_char[0])
+		{
+			for(j=1;j<(sizeof(target_char)/sizeof(target_char[0]));j++)
+			{
+				if(wifi_usart_buf[i+j] !=  target_char[j])
+				{
+					break;
+				}
+				return i+1;
+			}
+		}
+	}
+	return 0;
 }
 
 
@@ -204,8 +405,10 @@ void WIFI_USART_IRQHandler(void)
 		TIM_Cmd(WIFI_USART_TIM, ENABLE);
 		TIM_Multi = 0;
 		TIM_ClearITPendingBit(WIFI_USART_TIM , TIM_FLAG_Update);
-#else
-    USART_SendData(USART1,ucTemp); 
+#endif
+		
+#if 1
+    USART_SendData(DEBUG_USARTx,ucTemp); 
 #endif
 	}
 }
