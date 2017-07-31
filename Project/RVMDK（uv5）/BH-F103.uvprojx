@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD, USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\Libraries\CMSIS;..\..\User;..\..\Libraries\FWlib\inc;..\..\User\usart;..\..\User\WIFI;..\..\User\debug;..\..\User\SysTick;..\..\User\Timer</IncludePath>
+              <IncludePath>..\..\Libraries\CMSIS;..\..\User;..\..\Libraries\FWlib\inc;..\..\User\usart;..\..\User\WIFI;..\..\User\debug;..\..\User\SysTick;..\..\User\Timer;..\..\Drive</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -579,6 +579,16 @@
               <FileName>Timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\User\Timer\Timer.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>DRIVE</GroupName>
+          <Files>
+            <File>
+              <FileName>ESP8266.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Drive\ESP8266.c</FilePath>
             </File>
           </Files>
         </Group>
