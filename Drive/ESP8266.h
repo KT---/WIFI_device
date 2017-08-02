@@ -72,12 +72,19 @@ void WIFI_ESP8266_USART_TIM_Init(void);
 void WIFI_ESP8266_GPIO_Init(void);
 void WIFI_Generic_CmdSend(char * Data, ... );
 u8 WIFI_ESP8266_Restart(void);
-u8 WIFI_ESP8266_JoinAP(u8 *ssid,u8 *password);
+u8 WIFI_ESP8266_JoinAP(const char *ssid,const char *password);
+u8 WIFI_TcpUdp_Connet(const char *ConnetType,const char *IPaddr,const u32 PortNum);
+u8 WIFI_Send_ModeSet(const char MODE);
+u8 WIFI_NoParam_Cmd(const char *AT_Cmd);
+u8 WIFI_PostRequest(const char *URL,const u16 value_length,const char *Value,const char *FB_KeyWord);
+
+u8 WIFI_FeedbackProcess(char *Fb_s_Info,char *Fb_f_Info, u32 w_time,const char *RemindInfo);
 
 void clear_buffer(u8 *buffer,u16 length);
 u16 Usart_buf_find_char(u8 *target_char);
 
 extern u8 wifi_usart_buf[1024];
+extern u8 *Request_buf;
 extern u32 wifi_status; 
 
 

@@ -15,6 +15,7 @@
 
 
 u8 wifi_usart_buf[1024] = {0};
+u8 *Request_buf;
 u32 wifi_status; 
 u16 TIM_Multi = 0;
 
@@ -179,37 +180,12 @@ void WIFI_ESP8266_USART_TIM_Init(void)
   */
 u8 WIFI_ESP8266_Restart(void)
 {
-	u32 w_time = 0;
 	WIFI_disable;
 	WIFI_Reset;
 	Delay_ms(100);
 	WIFI_enable;
 	WIFI_Set;
-	while(!WIFI_rx_get)
-	{
-		Delay_us(1000);
-		if(++w_time > 5000)
-		{
-			printf("WIFI模块初始化超时\r\n\r\n");
-			clear_buffer(wifi_usart_buf,WIFI_buffer_len);
-			WIFI_rx_get_rst;
-			return OT;
-		}
-	}
-	if(Usart_buf_find_char((u8 *)("ready")))
-	{
-		printf("WIFI模块ready\r\n\r\n");
-		clear_buffer(wifi_usart_buf,WIFI_buffer_len);
-		WIFI_rx_get_rst;
-		return OK;
-	}
-	else
-	{
-		printf("WIFI模块初始化失败\r\n\r\n");
-		clear_buffer(wifi_usart_buf,WIFI_buffer_len);
-		WIFI_rx_get_rst;
-		return ERR;
-	}
+	return WIFI_FeedbackProcess("ready","ERROR", 5000,"WIFI模块启动");
 }
 /****************************************************************************/
 
@@ -217,34 +193,135 @@ u8 WIFI_ESP8266_Restart(void)
 /**
   *@name 加入AP
   */
-u8 WIFI_ESP8266_JoinAP(u8 *ssid,u8 *password)
+u8 WIFI_ESP8266_JoinAP(const char *ssid,const char *password)
+{
+	WIFI_Generic_CmdSend("AT+CWJAP=\"%s\",\"%s\"\r\n",ssid,password);
+	return WIFI_FeedbackProcess("OK","FAIL", 15000,"AP连接");
+}
+/****************************************************************************/
+
+
+/**
+  *@name TCP/UDP连接
+  */
+u8 WIFI_TcpUdp_Connet(const char *ConnetType,const char *IPaddr,const u32 PortNum)
+{
+	WIFI_Generic_CmdSend("AT+CIPSTART=\"%s\",\"%s\",%d\r\n",ConnetType,IPaddr,PortNum);
+  return WIFI_FeedbackProcess("OK","ERROR", 5000,"TCP连接");
+}
+/****************************************************************************/
+
+
+/**
+  *@name 设置透传模式
+  */
+u8 WIFI_Send_ModeSet(const char MODE)
+{
+	WIFI_Generic_CmdSend("AT+CIPMODE=%d\r\n",MODE);
+  return WIFI_FeedbackProcess("OK","ERROR", 5000,"透传模式设置");
+}
+/****************************************************************************/
+
+
+/**
+  *@name POST请求及数据返回处理
+  */
+u8 WIFI_PostRequest(const char *URL,const u16 value_length,const char *Value,const char *FB_KeyWord)
 {
 	u32 w_time = 0;
-	WIFI_Generic_CmdSend("AT+CWJAP=\"%s\",\"%s\"\r\n",ssid,password);
-	while(!(WIFI_rx_get && Usart_buf_find_char((u8 *)("OK"))))
+	
+	WIFI_Generic_CmdSend("POST %s HTTP/1.0\r\n",URL);
+	WIFI_Generic_CmdSend("Content-Type: application/x-www-form-urlencoded\r\n");
+	WIFI_Generic_CmdSend("Content-Length:%d\r\n\r\n",value_length);
+	WIFI_Generic_CmdSend("%s",Value);
+	
+	while(!(WIFI_rx_get && Usart_buf_find_char((u8 *)("200 OK"))))
 	{
 		Delay_us(1000);
-		if(++w_time > 20000)
+		if(++w_time >= 10000)
 		{
-			printf("AP连接超时\r\n\r\n");
+			printf("POST请求超时:408\r\n\r\n");
+			WIFI_Generic_CmdSend("+++");
 			clear_buffer(wifi_usart_buf,WIFI_buffer_len);
 			WIFI_rx_get_rst;
 			return OT;
 		}
-		if(Usart_buf_find_char((u8 *)("ERROR")))
+		if(Usart_buf_find_char((u8 *)("404 Not Found")))
 		{
-			printf("AP连接失败\r\n\r\n");
+			printf("POST请求失败:404\r\n\r\n");
+			WIFI_Generic_CmdSend("+++");
 			clear_buffer(wifi_usart_buf,WIFI_buffer_len);
 			WIFI_rx_get_rst;
 			return ERR;
 		}
 	}
-	printf("AP连接成功\r\n\r\n");
+	if(Usart_buf_find_char((u8 *)FB_KeyWord))
+	{
+		Request_buf = wifi_usart_buf+Usart_buf_find_char((u8 *)FB_KeyWord);
+		printf("POST请求成功\r\n\r\n");
+		printf("%s",Request_buf);
+		WIFI_Generic_CmdSend("+++");
+		clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+		WIFI_rx_get_rst;
+		return OK;
+	}
+	else
+	{
+		printf("POST请求接收数据异常\r\n\r\n");
+		WIFI_Generic_CmdSend("+++");
+		clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+		WIFI_rx_get_rst;
+		return ERR;
+	}
+
+
+}
+/****************************************************************************/
+
+
+/**
+  *@name 无参数AT指令传输
+  */
+u8 WIFI_NoParam_Cmd(const char *AT_Cmd)
+{
+	WIFI_Generic_CmdSend("%s\r\n",AT_Cmd);
+  return WIFI_FeedbackProcess("OK","ERROR", 5000,"AT指令设置");
+}
+/****************************************************************************/
+
+
+/**
+  *@name WIFI模块指令结果返回处理
+  */
+u8 WIFI_FeedbackProcess(char *Fb_s_Info,char *Fb_f_Info, u32 w_time,const char *RemindInfo)
+{
+	while(!(WIFI_rx_get && Usart_buf_find_char((u8 *)Fb_s_Info)))
+	{
+		Delay_us(1000);
+		if(!w_time--)
+		{
+			printf("%s超时\r\n\r\n",RemindInfo);
+			clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+			WIFI_rx_get_rst;
+			return OT;
+		}
+		if(Usart_buf_find_char((u8 *)Fb_f_Info))
+		{
+			printf("%s失败\r\n\r\n",RemindInfo);
+			clear_buffer(wifi_usart_buf,WIFI_buffer_len);
+			WIFI_rx_get_rst;
+			return ERR;
+		}
+	}
+	printf("%s成功\r\n\r\n",RemindInfo);
 	clear_buffer(wifi_usart_buf,WIFI_buffer_len);
 	WIFI_rx_get_rst;
 	return OK;
 }
 /****************************************************************************/
+
+
+
 
 
 /**
@@ -294,7 +371,7 @@ static char * itoa( int value, char *string, int radix )
 
 /**
 	* @name：WIFI_Generic_CmdSend
-	* @describe ：WIFI指令格式化输出，通用命令输出函数
+	* @describe ：WIFI指令格式化输出，通用命令输出函数,类似printf()
 	*/
 void WIFI_Generic_CmdSend(char * Data, ... )
 {
@@ -365,18 +442,23 @@ void WIFI_Generic_CmdSend(char * Data, ... )
 u16 Usart_buf_find_char(u8 *target_char)
 {
 	u16 i,j;
+	u8 len;
+	len = strlen((const char *)target_char);
 //	u8 ready[5]={0x72,0x65,0x61,0x64,0x79};
 	for(i=0;i<=WIFI_buffer_len;i++)
 	{
 		if(wifi_usart_buf[i] == target_char[0])
 		{
-			for(j=1;j<(sizeof(target_char)/sizeof(target_char[0]));j++)
+			for(j=1;j<len;j++)
 			{
 				if(wifi_usart_buf[i+j] !=  target_char[j])
 				{
 					break;
 				}
-				return i+1;
+			}
+			if(j >= len)
+			{
+				return i;
 			}
 		}
 	}

@@ -20,6 +20,7 @@
 #include "debug.h"
 #include <string.h>
 #include "Timer.h"
+#include "ESP8266.h"
 
 //void GPIO_Config(void);
 //void delay_ms(u16 time);
@@ -28,19 +29,15 @@
   * @param  нч
   * @retval нч
   */
-//u8 AT_CWJAP[]="AT+CWJAP=\"KLX\",\"klx39909679203\"\r\n";
-void USARTx_printf(USART_TypeDef * USARTx, char * Data, ... );
 
 int main(void)
 {	
   SysTick_Init();
 	debug_Init();
   WIFI_Config();
-//  USARTx_printf(DEBUG_USARTx,"USARTx_printf function test \r\nssid=%s\r\npassword=%s","KLX","klx39909679203");
-//	Delay_ms(500);
-//	USARTx_printf(WIFI_USARTx,"AT+CWJAP=\"%s\",\"%s\"\r\n","10niu-yanfa","yingjian20141014");
 
 
+	
   while(1)
 	{
 		

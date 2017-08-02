@@ -19,9 +19,7 @@
 
 
 
-/**
-  *@name USART3串口接收监测定时器初始化
-  */
+
 
 
 
@@ -36,8 +34,15 @@ void WIFI_Config(void)
 	WIFI_ESP8266_USART_TIM_Init();
 	
 	WIFI_ESP8266_Restart();
-	Delay_ms(50);
+	WIFI_Send_ModeSet(1);
+	Delay_ms(10);
 	WIFI_ESP8266_JoinAP("10niu-yanfa","yingjian20141014");
+	Delay_ms(50);
+	WIFI_TcpUdp_Connet("TCP","192.168.0.117",80);
+	Delay_ms(50);
+	
+	WIFI_NoParam_Cmd("AT+CIPSEND");
+	WIFI_PostRequest("http://localhost/LoginTest/connection-test.php",48,"Device_Num=001&CARD_Num=1234567890&Quantity=100","hello world!!");
 
 }
 /**********************************************************/
